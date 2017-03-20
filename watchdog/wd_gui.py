@@ -5,12 +5,39 @@ https://www.reddit.com/r/learnpython/comments/34jwlw/showing_opencv_live_video_i
 '''
 import sys
 import os
+import queue
 import cv2
 import numpy as np
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QMessageBox,QHBoxLayout, QVBoxLayout, QFileDialog
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QImage
+from PyQt5 import QtWidgets, QtCore, QtGui
 
+
+def grab_video(src, queue, width, height, fps):
+    global running
+
+    ret, capture = cv2.VideoCapture(src)
+    
+    if not ret:
+        print("can't get video")
+        return 
+    
+    capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+    capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+    capture.set(cv2.CAP_PROP_FPS, fps)
+
+    while(running):
+        frame = {}
+        ret, img = capture.read()
+        frame["img"] = img
+
+        if queue.size < 10 :
+            queue.put(frame)
+        else:
+            print queue.qsize()
+
+    
+
+
+'''
 class WD_Opencv(QObject):
     run = False
     camera_port = 0
@@ -30,6 +57,8 @@ class WD_Opencv(QObject):
         self.capturer = cv2.VideoCapture(self.video_path)
         while self.run:
             ret, image = self.capturer.read()
+            if not ret:
+                break
             print(ret)
             color_swapped_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             rows, cols, _ = color_swapped_image.shape
@@ -37,7 +66,31 @@ class WD_Opencv(QObject):
                                 cols,
                                 rows,
                                 QImage.Format_RGB888)
-            self.videoSignal.emit(qt_image)
+            self.image_signal.emit(qt_image)
+'''
+
+
+"""
+ImageViewer 自定义图像显示类
+"""
+class ImageViewer(QWidget):
+    def __init__(self):
+        super(ImageViewer, self).__init__()
+        self.image = None
+    
+    def initUI(self):
+        self.setGeometry(50,50, 1000, 1000)
+        self.setWindowTitle("video")
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.drawImage(0,0,self.image)
+    
+    @pyqtSlot(QImage)
+    def setImage(self, image):
+        self.image = image
+
+
 
 class WD_Window(QWidget):
     
@@ -51,7 +104,10 @@ class WD_Window(QWidget):
     def initUI(self):
 
         self.projector = WD_Opencv()
-       
+        self.image_viewer = ImageViewer()
+
+        self.projector.image_signal.connect(self.image_viewer.setImage)
+
         self.fileButton = QPushButton("导入视频文件")
         self.cameraButton = QPushButton("开启摄像头")
 
@@ -64,6 +120,7 @@ class WD_Window(QWidget):
 
         mainLayout = QVBoxLayout()
         mainLayout.addLayout(buttonLayout)
+        mainLayout.addWidget(self.image_viewer)
 
         self.setLayout(mainLayout)
         self.setWindowTitle("Watch Dog")

@@ -10,8 +10,11 @@
 ## 技术栈 ###
 * OS：win10
 * 开发语言： Python 3.6.0
+* Qt：PyQt4
+* OpenCV： OpenCV2
 
 ## 环境搭建 ###
+* [PyQt4 安装]()
 * [Windows下基于Python3的OpenCV安装](https://www.solarianprogrammer.com/2016/09/17/install-opencv-3-with-python-3-on-windows/)
 * [Windows下Github Permission to denied to username解决方法](https://www.leeboonstra.com/developer/github-error-permission-to-userrepo-denied-to-userother-repo/)
 手抄:control panel > user accounts > credential manager > Windows credentials > Generic credentials
